@@ -2,6 +2,7 @@ package wumpus;
 
 import java.util.Hashtable;
 import java.util.Random;
+import wumpus.Box.*;
 /**
  * Clase de Helpers
  * */
@@ -13,11 +14,11 @@ public class Helpers {
     }
 
     /* Este metodo sirve para visualizar la tabla en consola */
-    public static String printTable(int[][] table) {
+    public static String printTable(Box[][] table) {
         String result = "";
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
-                result += " [" + table[i][j] + "] ";
+                result += " [" + table[i][j].getAttribute(BoxAttribute.VALUE) + "] ";
             }
             result += "\n";
         }
@@ -26,7 +27,7 @@ public class Helpers {
 
     /* Devuelve las posiciones de la matriz para el hedor y/o viento */
     public static Hashtable<String, Integer> aroundObjectPositions(int x, int y) {
-        Hashtable<String, Integer> hash = new Hashtable();
+        Hashtable hash = new Hashtable();
         if(x > 0 && x < 9 && y > 0 && y < 9) {
             /* Todo lo de en medio */
             hash.put("x0", x);
@@ -114,6 +115,28 @@ public class Helpers {
         return hash;
     }
 
+    /* Metodo para validar que no se encuentre encerrado al iniciar */
+
+    public static boolean isLockedUp(Box[][] table, int x, int y) {
+        return (y != 9 && isEnemy(table[x][y + 1])) && (y != 0 && isEnemy(table[x][y - 1])) && (x != 0 && isEnemy(table[x - 1][y])) && (x != 9 && isEnemy(table[x + 1][y]));
+    }
+
+    /* Verifica si el valor es de un enemigo */
+
+    public static boolean isEnemy(Box box) {
+        return box.getAttribute(BoxAttribute.VALUE) == 20 || box.getAttribute(BoxAttribute.VALUE) == 30;
+    }
+
+    public static int combineValues(int inputValue, int actualValue) {
+        int realValue = inputValue;
+        if(actualValue == 40 && inputValue == 60) realValue = 70;
+        else if(actualValue == 50 && inputValue == 60) realValue = 110;
+        else if(actualValue == 40 && inputValue == 10) realValue = 100;
+        else if(actualValue == 50 && inputValue == 10) realValue = 80;
+
+        return realValue;
+    }
+
     /* Este metodo devuelve la ruta de la imagen del objeto */
     public static String getCharacterValue(int characterValue) {
         switch (characterValue) {
@@ -133,7 +156,24 @@ public class Helpers {
                 return "src/assets/serpiente.png";
             case 60:
                 return "src/assets/sasuke.png";
+            case 70:
+                return "src/assets/viento_sasuke.png";
+            case 80:
+                return "src/assets/serpiente_sasuke.png";
+            case 90:
+                return "src/assets/viento_serpiente.png";
+            case 100:
+                return "src/assets/viento_naruto.png";
+            case 110:
+                return "src/assets/serpiente_naruto.png";
+            case 120:
+                return "src/assets/sasuke_naruto.png";
         }
         return null;
+    }
+
+    /* La casilla se encuentra disponible para llenarse al comienzo */
+    public static boolean isAvailableBox(int value) {
+        return value == 0 || value == 40 || value == 50;
     }
 }
