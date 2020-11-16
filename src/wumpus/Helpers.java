@@ -2,6 +2,8 @@ package wumpus;
 
 import java.util.Hashtable;
 import java.util.Random;
+import java.util.Stack;
+
 import wumpus.Box.*;
 /**
  * Clase de Helpers
@@ -130,9 +132,9 @@ public class Helpers {
     public static int combineValues(int inputValue, int actualValue) {
         int realValue = inputValue;
         if(actualValue == 40 && inputValue == 60) realValue = 70;
-        else if(actualValue == 50 && inputValue == 60) realValue = 110;
+        else if(actualValue == 50 && inputValue == 60) realValue = 80;
         else if(actualValue == 40 && inputValue == 10) realValue = 100;
-        else if(actualValue == 50 && inputValue == 10) realValue = 80;
+        else if(actualValue == 50 && inputValue == 10) realValue = 110;
 
         return realValue;
     }
@@ -172,7 +174,7 @@ public class Helpers {
         return null;
     }
 
-    /* La casilla se encuentra disponible para llenarse al comienzo */
+    /* La casilla se encuentra disponible */
     public static boolean isAvailableBox(int value) {
         return value == 0 || value == 40 || value == 50;
     }

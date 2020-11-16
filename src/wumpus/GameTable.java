@@ -26,6 +26,7 @@ public class GameTable extends JPanel {
         for (JButton[] box : boxes) {
             for (JButton jButton : box) {
                 jButton.setIcon(null);
+                jButton.setBackground(null);
             }
         }
         repaint();

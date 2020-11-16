@@ -3,6 +3,7 @@ package wumpus;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Hashtable;
+import java.util.Stack;
 
 import static wumpus.Helpers.*;
 import static wumpus.Box.*;
@@ -11,8 +12,11 @@ import static wumpus.Box.*;
  * En esta clase se realizan las validaciones del juego
  * */
 public class MainPanel extends JPanel implements Runnable {
-    private Box[][] table = new Box[10][10];
-    private int inputX, inputY;
+    private final Box[][] table = new Box[10][10];
+    private Stack<Box> openSet, closedSet, path;
+    private boolean done = false;
+    private int inputX = 0, inputY = 0, endX = 0, endY = 0;
+
     private Thread mainThread;
     private final GameTable gameTable = new GameTable(10);
 
@@ -21,42 +25,57 @@ public class MainPanel extends JPanel implements Runnable {
         JButton btnInit = new JButton("Iniciar");
         JButton btnRestart = new JButton("Reiniciar");
         mainThread = new Thread(this);
+        mainThread.start();
         panelBtns.add(btnInit);
         panelBtns.add(btnRestart);
 
         setLayout(new BorderLayout());
         add(gameTable, BorderLayout.NORTH);
         add(panelBtns, BorderLayout.CENTER);
+
+        openSet = new Stack<>();
+        closedSet = new Stack<>();
+        path = new Stack<>();
         initTable();
         setRandomPositions();
-        System.out.println(printTable(table));
+//        System.out.println(printTable(table));
 
         btnInit.addActionListener(e -> {
             /* Iniciar algoritmo a* */
             btnInit.setEnabled(false);
-            mainThread.start();
+            openSet.push(table[inputX][inputY]);
+
+            analyze(table[inputX][inputY]);
+            /*for(Box box : path) {
+                System.out.println(box.getAttribute(BoxAttribute.X) + ", " + box.getAttribute(BoxAttribute.Y) + ": " + box.getAttribute(BoxAttribute.VALUE));
+            }*/
         });
 
         btnRestart.addActionListener(e -> {
+            openSet.clear();
+            closedSet.clear();
+            path.clear();
             initTable();
             setRandomPositions();
+            btnInit.setEnabled(true);
         });
     }
 
     public void setRandomPositions() {
         gameTable.restart();
+        inputY = 0;
+        inputX = 0;
+        endY = 0;
+        endX = 0;
         /* Pozos */
-        insertObject(30);
-        insertObject(30);
-        insertObject(30);
-        insertObject(30);
-        insertObject(30);
-        insertObject(30);
+        for (int i = 0; i < 20; i++) {
+            insertObject(30);
+        }
         /* Orochimaru (wumpus) */
         insertObject(20);
-        /* Naruto (heroe) */
+        //* Naruto (heroe) */
         insertObject(10);
-        /* Sasuke (Tesoro) */
+        //* Sasuke (Tesoro) */
         insertObject(60);
     }
 
@@ -64,6 +83,12 @@ public class MainPanel extends JPanel implements Runnable {
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
                 table[i][j] = new Box(i, j);
+            }
+        }
+
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 10; j++) {
+                table[i][j].setBoxesAround(table);
             }
         }
     }
@@ -83,6 +108,10 @@ public class MainPanel extends JPanel implements Runnable {
                     if (value == 10) {
                         inputX = x;
                         inputY = y;
+                    }
+                    if (value == 60) {
+                        endX = x;
+                        endY = y;
                     }
                 } else insertObject(value);
             } else if (value == 30 || value == 20) {
@@ -113,16 +142,103 @@ public class MainPanel extends JPanel implements Runnable {
         }
     }
 
+    /* TODO: Verificar que en verdad tome el mejor camino posible */
+    public void analyze(Box inputBox) {
+        /* Se declaran los stacks de around (vecinos de la casilla) */
+        Stack<Box> around, auxStack;
+        /* Se obtienen las coordenadas iniciales */
+        int x = inputBox.getAttribute(BoxAttribute.X);
+        int y = inputBox.getAttribute(BoxAttribute.Y);
+        /* Comienza un ciclo hasta que se encuentre la ultima casilla */
+        while ((x != endX || y != endY) && !openSet.isEmpty()) {
+            /* Se instancia la casilla actual */
+            Box naruto = table[x][y];
+            /* Se inicia su F */
+            naruto.setAttribute(BoxAttribute.F, 1000);
+            /* Se elimina de el stack de abiertos y se agrega a cerrados */
+            closedSet.push(naruto);
+            openSet.remove(naruto);
+            /* Para cada casilla en abiertos se actualiza la heuristica y se valida si tiene una menor F que el actual */
+            for (Box box : openSet) {
+                heuristic(box);
+                if (box.getAttribute(BoxAttribute.F) < naruto.getAttribute(BoxAttribute.F)) {
+                    /* En caso de tener una menor F, se actualiza la instancia de la casilla actual */
+                    naruto = box;
+                }
+            }
+            /* Se actualizan los valores de X y Y */
+            x = naruto.getAttribute(BoxAttribute.X);
+            y = naruto.getAttribute(BoxAttribute.Y);
+
+            /* Se obtienen las casillas vecinas a la actual */
+            around = naruto.getAround();
+            /* Para cada vecino se valida que no sea un enemigo y no se haya revisado anteriormente */
+            for (Box box : around) {
+                if (!isEnemy(box) && !closedSet.contains(box)) {
+                    /* Se crea una varibale temporal para controlar el peso */
+                    int tempG = naruto.getAttribute(BoxAttribute.G) + 1;
+                    if (openSet.contains(box)) {
+                        /* Si el vecino se encuentra en abiertos se valida que el G temporal sea menor al G del vecino*/
+                        if (tempG < box.getAttribute(BoxAttribute.G)) {
+                            box.setAttribute(BoxAttribute.G, tempG);
+                        }
+                    } else {
+                        /* En caso de no estar en abiertos se añade la instancia a su padre y se agrega al stack de abiertos */
+                        box.setFatherBox(naruto);
+                        openSet.push(box);
+                    }
+                }
+            }
+        }
+        /* Llenar el stack auxiliar */
+        auxStack = new Stack<>();
+        Box last = table[endX][endY];
+        while (last.getFatherBox() != null) {
+            last = last.getFatherBox();
+            auxStack.push(last);
+        }
+        /* Invertir el stack auxiliar para llenar el de path */
+        for (int i = auxStack.size() - 1; i >= 0; i--) {
+            Box box = auxStack.get(i);
+            path.push(box);
+        }
+        path.push(table[endX][endY]);
+        /* Levantar bandera para pintar en el metodo runnable */
+        done = true;
+    }
+
+    public void heuristic(Box box) {
+        int x = box.getAttribute(BoxAttribute.X);
+        int y = box.getAttribute(BoxAttribute.Y);
+        int h = Math.abs(endX - x) + Math.abs(endY - y);
+        int g = box.getAttribute(BoxAttribute.G);
+        box.setAttribute(BoxAttribute.G, g);
+        box.setAttribute(BoxAttribute.H, h);
+        box.setAttribute(BoxAttribute.F, h + g);
+    }
+
     @Override
     public void run() {
         /* Juego */
-        while(true) {
+        while (true) {
             try {
-                Thread.sleep(2000);
+                System.out.println("");
 //                table[inputX][inputY].setAttribute(BoxAttribute.VALUE,0);
                 /*gameTable.boxes[inputX][inputY].setIcon(null);
                 inputY++;
                 gameTable.createImage(10, inputX, inputY);*/
+                /* TODO: Modificar esta wea xd */
+                if (done) {
+                    for (int i = 0; i < path.size(); i++) {
+                        Box box = path.get(i);
+                        int x = box.getAttribute(BoxAttribute.X);
+                        int y = box.getAttribute(BoxAttribute.Y);
+                        int value = box.getAttribute(BoxAttribute.VALUE);
+                        Thread.sleep(500);
+                        gameTable.boxes[x][y].setBackground(Color.BLUE);
+                    }
+                    done = false;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
