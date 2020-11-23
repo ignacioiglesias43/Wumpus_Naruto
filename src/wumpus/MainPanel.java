@@ -14,7 +14,7 @@ import static wumpus.Box.*;
 public class MainPanel extends JPanel implements Runnable {
     private final Box[][] table = new Box[10][10];
     private Stack<Box> openSet, closedSet, path;
-    private boolean done = false;
+    private volatile boolean done = false;
     private int inputX = 0, inputY = 0, endX = 0, endY = 0;
 
     private Thread mainThread;
@@ -142,28 +142,30 @@ public class MainPanel extends JPanel implements Runnable {
         }
     }
 
-    /* TODO: Verificar que en verdad tome el mejor camino posible */
     public void analyze(Box inputBox) {
         /* Se declaran los stacks de around (vecinos de la casilla) */
         Stack<Box> around, auxStack;
         /* Se obtienen las coordenadas iniciales */
         int x = inputBox.getAttribute(BoxAttribute.X);
         int y = inputBox.getAttribute(BoxAttribute.Y);
+        int g = 0;
         /* Comienza un ciclo hasta que se encuentre la ultima casilla */
         while ((x != endX || y != endY) && !openSet.isEmpty()) {
+            g++;
             /* Se instancia la casilla actual */
             Box naruto = table[x][y];
-            /* Se inicia su F */
+            /* TODO Validar bien esto, el error puede estar por aqui */
             naruto.setAttribute(BoxAttribute.F, 1000);
             /* Se elimina de el stack de abiertos y se agrega a cerrados */
             closedSet.push(naruto);
             openSet.remove(naruto);
             /* Para cada casilla en abiertos se actualiza la heuristica y se valida si tiene una menor F que el actual */
             for (Box box : openSet) {
-                heuristic(box);
+                heuristic(box, g);
                 if (box.getAttribute(BoxAttribute.F) < naruto.getAttribute(BoxAttribute.F)) {
                     /* En caso de tener una menor F, se actualiza la instancia de la casilla actual */
                     naruto = box;
+                    heuristic(naruto, g);
                 }
             }
             /* Se actualizan los valores de X y Y */
@@ -180,6 +182,7 @@ public class MainPanel extends JPanel implements Runnable {
                     if (openSet.contains(box)) {
                         /* Si el vecino se encuentra en abiertos se valida que el G temporal sea menor al G del vecino*/
                         if (tempG < box.getAttribute(BoxAttribute.G)) {
+                            System.out.println("si");
                             box.setAttribute(BoxAttribute.G, tempG);
                         }
                     } else {
@@ -200,6 +203,7 @@ public class MainPanel extends JPanel implements Runnable {
         /* Invertir el stack auxiliar para llenar el de path */
         for (int i = auxStack.size() - 1; i >= 0; i--) {
             Box box = auxStack.get(i);
+            System.out.println(box.getAttribute(BoxAttribute.G) + " " + box.getAttribute(BoxAttribute.H));
             path.push(box);
         }
         path.push(table[endX][endY]);
@@ -207,14 +211,27 @@ public class MainPanel extends JPanel implements Runnable {
         done = true;
     }
 
-    public void heuristic(Box box) {
+    public void heuristic(Box box, int g) {
         int x = box.getAttribute(BoxAttribute.X);
         int y = box.getAttribute(BoxAttribute.Y);
         int h = Math.abs(endX - x) + Math.abs(endY - y);
-        int g = box.getAttribute(BoxAttribute.G);
         box.setAttribute(BoxAttribute.G, g);
         box.setAttribute(BoxAttribute.H, h);
         box.setAttribute(BoxAttribute.F, h + g);
+    }
+
+    public int getNewCharacterValue(int value) {
+        switch (value) {
+            case 40:
+                return 100;
+            case 50:
+                return 110;
+            case 60:
+            case 70:
+            case 80:
+                return 120;
+        }
+        return 10;
     }
 
     @Override
@@ -222,22 +239,31 @@ public class MainPanel extends JPanel implements Runnable {
         /* Juego */
         while (true) {
             try {
-                System.out.println("");
-//                table[inputX][inputY].setAttribute(BoxAttribute.VALUE,0);
-                /*gameTable.boxes[inputX][inputY].setIcon(null);
-                inputY++;
-                gameTable.createImage(10, inputX, inputY);*/
-                /* TODO: Modificar esta wea xd */
-                if (done) {
-                    for (int i = 0; i < path.size(); i++) {
-                        Box box = path.get(i);
+                if(done) {
+                    Box lastBox = null;
+                    for(Box box : path) {
                         int x = box.getAttribute(BoxAttribute.X);
                         int y = box.getAttribute(BoxAttribute.Y);
                         int value = box.getAttribute(BoxAttribute.VALUE);
+                        gameTable.createImage(getNewCharacterValue(value), x, y);
+                        if(lastBox != null) {
+                            x = lastBox.getAttribute(BoxAttribute.X);
+                            y = lastBox.getAttribute(BoxAttribute.Y);
+                            value = lastBox.getAttribute(BoxAttribute.VALUE);
+                            if(value != 0 && value != 10) {
+                                if(value == 100) value = 40;
+                                else if(value == 110) value = 50;
+
+                                gameTable.createImage(value, x, y);
+                            } else gameTable.boxes[x][y].setIcon(null);
+                        }
                         Thread.sleep(500);
-                        gameTable.boxes[x][y].setBackground(Color.BLUE);
+                        lastBox = box;
                     }
                     done = false;
+                    Box father = table[endX][endY].getFatherBox();
+                    JOptionPane.showMessageDialog(this, "Juego terminado en " + father.getAttribute(BoxAttribute.G) + " pasos",
+                            "Terminado", JOptionPane.DEFAULT_OPTION, null);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
