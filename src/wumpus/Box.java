@@ -96,4 +96,23 @@ public class Box {
 
         setAround(aroundBoxes);
     }
+
+    public void heuristic(int g, int endX, int endY) {
+        int x = getAttribute(BoxAttribute.X);
+        int y = getAttribute(BoxAttribute.Y);
+        int h = Math.abs(endX - x) + Math.abs(endY - y);
+        setAttribute(BoxAttribute.G, g);
+        setAttribute(BoxAttribute.H, h);
+        setAttribute(BoxAttribute.F, h + g);
+    }
+
+    public void heuristic(int endX, int endY) {
+        int x = getAttribute(BoxAttribute.X);
+        int y = getAttribute(BoxAttribute.Y);
+        int h = Math.abs(endX - x) + Math.abs(endY - y);
+        int g = getAttribute(BoxAttribute.G);
+        setAttribute(BoxAttribute.G, g);
+        setAttribute(BoxAttribute.H, h);
+        setAttribute(BoxAttribute.F, h + g);
+    }
 }

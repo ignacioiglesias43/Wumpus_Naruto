@@ -77,6 +77,7 @@ public class MainPanel extends JPanel implements Runnable {
         insertObject(10);
         //* Sasuke (Tesoro) */
         insertObject(60);
+        table[inputX][inputY].heuristic(endX, endY);
     }
 
     public void initTable() {
@@ -154,18 +155,18 @@ public class MainPanel extends JPanel implements Runnable {
             g++;
             /* Se instancia la casilla actual */
             Box naruto = table[x][y];
-            /* TODO Validar bien esto, el error puede estar por aqui */
+            /*gameTable.boxes[x][y].setBackground(Color.GREEN);*/
             naruto.setAttribute(BoxAttribute.F, 1000);
             /* Se elimina de el stack de abiertos y se agrega a cerrados */
             closedSet.push(naruto);
             openSet.remove(naruto);
             /* Para cada casilla en abiertos se actualiza la heuristica y se valida si tiene una menor F que el actual */
             for (Box box : openSet) {
-                heuristic(box, g);
+                box.heuristic(g, endX, endY);
                 if (box.getAttribute(BoxAttribute.F) < naruto.getAttribute(BoxAttribute.F)) {
                     /* En caso de tener una menor F, se actualiza la instancia de la casilla actual */
                     naruto = box;
-                    heuristic(naruto, g);
+                    naruto.setAttribute(BoxAttribute.F, 0);
                 }
             }
             /* Se actualizan los valores de X y Y */
@@ -182,7 +183,7 @@ public class MainPanel extends JPanel implements Runnable {
                     if (openSet.contains(box)) {
                         /* Si el vecino se encuentra en abiertos se valida que el G temporal sea menor al G del vecino*/
                         if (tempG < box.getAttribute(BoxAttribute.G)) {
-                            System.out.println("si");
+                            System.out.println(tempG);
                             box.setAttribute(BoxAttribute.G, tempG);
                         }
                     } else {
@@ -203,21 +204,11 @@ public class MainPanel extends JPanel implements Runnable {
         /* Invertir el stack auxiliar para llenar el de path */
         for (int i = auxStack.size() - 1; i >= 0; i--) {
             Box box = auxStack.get(i);
-            System.out.println(box.getAttribute(BoxAttribute.G) + " " + box.getAttribute(BoxAttribute.H));
             path.push(box);
         }
         path.push(table[endX][endY]);
         /* Levantar bandera para pintar en el metodo runnable */
         done = true;
-    }
-
-    public void heuristic(Box box, int g) {
-        int x = box.getAttribute(BoxAttribute.X);
-        int y = box.getAttribute(BoxAttribute.Y);
-        int h = Math.abs(endX - x) + Math.abs(endY - y);
-        box.setAttribute(BoxAttribute.G, g);
-        box.setAttribute(BoxAttribute.H, h);
-        box.setAttribute(BoxAttribute.F, h + g);
     }
 
     public int getNewCharacterValue(int value) {
@@ -245,6 +236,7 @@ public class MainPanel extends JPanel implements Runnable {
                         int x = box.getAttribute(BoxAttribute.X);
                         int y = box.getAttribute(BoxAttribute.Y);
                         int value = box.getAttribute(BoxAttribute.VALUE);
+                        /*gameTable.boxes[x][y].setBackground(Color.BLUE);*/
                         gameTable.createImage(getNewCharacterValue(value), x, y);
                         if(lastBox != null) {
                             x = lastBox.getAttribute(BoxAttribute.X);
@@ -261,8 +253,7 @@ public class MainPanel extends JPanel implements Runnable {
                         lastBox = box;
                     }
                     done = false;
-                    Box father = table[endX][endY].getFatherBox();
-                    JOptionPane.showMessageDialog(this, "Juego terminado en " + father.getAttribute(BoxAttribute.G) + " pasos",
+                    JOptionPane.showMessageDialog(this, "Juego terminado en " + (path.size() - 1) + " pasos",
                             "Terminado", JOptionPane.DEFAULT_OPTION, null);
                 }
             } catch (Exception e) {
