@@ -4,6 +4,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 public class Window extends JFrame {
     private MainPanel mainPanel = new MainPanel();
@@ -14,6 +18,7 @@ public class Window extends JFrame {
     private JMenuItem restart = new JMenuItem("Reiniciar");
     private JMenuItem exit = new JMenuItem("Salir");
     private JLabel init, about, exitL;
+    public static final String SONG = "src/op2.wav";
 
     public Window() {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -34,7 +39,7 @@ public class Window extends JFrame {
         init.addMouseListener(MouseListener(1));
         about.addMouseListener(MouseListener(2));
         exitL.addMouseListener(MouseListener(3));
-
+        Audio();
         Menu();
         setContentPane(menuPanel);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -43,6 +48,20 @@ public class Window extends JFrame {
         setTitle("Wumpus-Naruto");
         setVisible(true);
         setResizable(false);
+    }
+
+    public void Audio() {
+        try {
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(SONG).getAbsoluteFile());
+            Clip clip = AudioSystem.getClip();
+
+            // open audioInputStream to the clip
+            clip.open(audioInputStream);
+
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void Menu() {

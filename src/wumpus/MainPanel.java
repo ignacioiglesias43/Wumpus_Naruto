@@ -56,7 +56,7 @@ public class MainPanel extends JPanel implements Runnable {
         endY = 0;
         endX = 0;
         /* Pozos */
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 30; i++) {
             insertObject(30);
         }
         /* Orochimaru (wumpus) */
@@ -219,30 +219,36 @@ public class MainPanel extends JPanel implements Runnable {
         while (true) {
             try {
                 if(done) {
-                    Box lastBox = null;
-                    for(Box box : path) {
-                        int x = box.getAttribute(BoxAttribute.X);
-                        int y = box.getAttribute(BoxAttribute.Y);
-                        int value = box.getAttribute(BoxAttribute.VALUE);
-                        /*gameTable.boxes[x][y].setBackground(Color.BLUE);*/
-                        gameTable.createImage(getNewCharacterValue(value), x, y);
-                        if(lastBox != null) {
-                            x = lastBox.getAttribute(BoxAttribute.X);
-                            y = lastBox.getAttribute(BoxAttribute.Y);
-                            value = lastBox.getAttribute(BoxAttribute.VALUE);
-                            if(value != 0 && value != 10) {
-                                if(value == 100) value = 40;
-                                else if(value == 110) value = 50;
-
-                                gameTable.createImage(value, x, y);
-                            } else gameTable.createImage(0, x, y);
-                        }
-                        Thread.sleep(500);
-                        lastBox = box;
-                    }
                     done = false;
-                    JOptionPane.showMessageDialog(this, "Juego terminado en " + (path.size() - 1) + " pasos",
-                            "Terminado", JOptionPane.DEFAULT_OPTION, null);
+                    if(path.size() - 1 > 0) {
+                        Box lastBox = null;
+                        for(Box box : path) {
+                            int x = box.getAttribute(BoxAttribute.X);
+                            int y = box.getAttribute(BoxAttribute.Y);
+                            int value = box.getAttribute(BoxAttribute.VALUE);
+                            /*gameTable.boxes[x][y].setBackground(Color.BLUE);*/
+                            gameTable.createImage(getNewCharacterValue(value), x, y);
+                            if(lastBox != null) {
+                                x = lastBox.getAttribute(BoxAttribute.X);
+                                y = lastBox.getAttribute(BoxAttribute.Y);
+                                value = lastBox.getAttribute(BoxAttribute.VALUE);
+                                if(value != 0 && value != 10) {
+                                    if(value == 100) value = 40;
+                                    else if(value == 110) value = 50;
+
+                                    gameTable.createImage(value, x, y);
+                                } else gameTable.createImage(0, x, y);
+                            }
+                            Thread.sleep(500);
+                            lastBox = box;
+                        }
+                        JOptionPane.showMessageDialog(this, "Juego terminado en " + (path.size() - 1) + " pasos",
+                                "Terminado", JOptionPane.DEFAULT_OPTION, null);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "El escenario no tiene solución",
+                                "Terminado", JOptionPane.DEFAULT_OPTION, null);
+                    }
+
                 }
             } catch (Exception e) {
                 e.printStackTrace();
