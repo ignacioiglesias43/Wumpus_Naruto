@@ -21,44 +21,32 @@ public class MainPanel extends JPanel implements Runnable {
     private final GameTable gameTable = new GameTable(10);
 
     public MainPanel() {
-        JPanel panelBtns = new JPanel(new GridLayout(1, 2, 20, 0));
-        JButton btnInit = new JButton("Iniciar");
-        JButton btnRestart = new JButton("Reiniciar");
         mainThread = new Thread(this);
         mainThread.start();
-        panelBtns.add(btnInit);
-        panelBtns.add(btnRestart);
 
         setLayout(new BorderLayout());
-        add(gameTable, BorderLayout.NORTH);
-        add(panelBtns, BorderLayout.CENTER);
+        add(gameTable, BorderLayout.CENTER);
 
         openSet = new Stack<>();
         closedSet = new Stack<>();
         path = new Stack<>();
         initTable();
         setRandomPositions();
-//        System.out.println(printTable(table));
+    }
 
-        btnInit.addActionListener(e -> {
-            /* Iniciar algoritmo a* */
-            btnInit.setEnabled(false);
-            openSet.push(table[inputX][inputY]);
+    public void initGame() {
+        /* Iniciar algoritmo a* */
+        openSet.push(table[inputX][inputY]);
 
-            analyze(table[inputX][inputY]);
-            /*for(Box box : path) {
-                System.out.println(box.getAttribute(BoxAttribute.X) + ", " + box.getAttribute(BoxAttribute.Y) + ": " + box.getAttribute(BoxAttribute.VALUE));
-            }*/
-        });
+        analyze(table[inputX][inputY]);
+    }
 
-        btnRestart.addActionListener(e -> {
-            openSet.clear();
-            closedSet.clear();
-            path.clear();
-            initTable();
-            setRandomPositions();
-            btnInit.setEnabled(true);
-        });
+    public void restartGame() {
+        openSet.clear();
+        closedSet.clear();
+        path.clear();
+        initTable();
+        setRandomPositions();
     }
 
     public void setRandomPositions() {
@@ -247,7 +235,7 @@ public class MainPanel extends JPanel implements Runnable {
                                 else if(value == 110) value = 50;
 
                                 gameTable.createImage(value, x, y);
-                            } else gameTable.boxes[x][y].setIcon(null);
+                            } else gameTable.createImage(0, x, y);
                         }
                         Thread.sleep(500);
                         lastBox = box;

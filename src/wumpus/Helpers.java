@@ -142,6 +142,8 @@ public class Helpers {
     /* Este metodo devuelve la ruta de la imagen del objeto */
     public static String getCharacterValue(int characterValue) {
         switch (characterValue) {
+            case 0:
+                return "src/assets/pasto.jpg";
             case 1:
                 return "src/assets/entrada.png";
             case 2:

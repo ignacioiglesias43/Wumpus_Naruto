@@ -15,7 +15,12 @@ public class GameTable extends JPanel {
             for (int j = 0; j < boxes[i].length; j++) {
                 boxes[i][j] = new JButton();
                 boxes[i][j].setEnabled(true);
-                boxes[i][j].setPreferredSize(new Dimension(50, 50));
+                boxes[i][j].setBorder(null);
+                boxes[i][j].setBorderPainted(false);
+                boxes[i][j].setContentAreaFilled(false);
+                boxes[i][j].setHorizontalTextPosition(JButton.CENTER);
+                boxes[i][j].setVerticalTextPosition(JButton.CENTER);
+                boxes[i][j].setPreferredSize(new Dimension(70, 70));
                 add(boxes[i][j]);
             }
             setLayout(new GridLayout(max, max));
@@ -25,8 +30,9 @@ public class GameTable extends JPanel {
     public void restart() {
         for (JButton[] box : boxes) {
             for (JButton jButton : box) {
-                jButton.setIcon(null);
-                jButton.setBackground(null);
+                ImageIcon icon = new ImageIcon(getCharacterValue(0));
+                Image img = getScaledImage(icon.getImage(), 70, 70);
+                jButton.setIcon(new ImageIcon(img));
             }
         }
         repaint();
@@ -45,7 +51,7 @@ public class GameTable extends JPanel {
 
     public void createImage(int characterValue, int x, int y) {
         ImageIcon icon = new ImageIcon(getCharacterValue(characterValue));
-        Image img = getScaledImage(icon.getImage(), 50, 50);
+        Image img = getScaledImage(icon.getImage(), 70, 70);
 
         boxes[x][y].setIcon(new ImageIcon(img));
     }
